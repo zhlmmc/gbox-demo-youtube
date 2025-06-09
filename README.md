@@ -1,19 +1,30 @@
 # GBox Android Automation with Mastra
 
-This project demonstrates how to use Mastra with the gbox SDK to automate Android devices.
+This project demonstrates how to use Mastra with the gbox SDK to automate Android devices. It includes both traditional programmatic automation and **advanced AI-powered visual automation** using OpenAI's computer use model.
 
 ## Features
 
+### Traditional Android Automation
 The GBox Android tool provides the following capabilities:
 
 - **Create Android Sandbox**: Initialize a cloud-based Android device
 - **Click Operations**: Click on specific screen coordinates  
 - **Text Input**: Type text into the Android device
 - **Key Presses**: Press device keys (enter, delete, back, home, space, arrow keys, menu)
-- **Swipe Gestures**: Perform swipe operations across the screen
-- **Screen Info**: Get device screen dimensions
+- **Screenshot Capture**: Take screenshots with optional clipping and format options
 - **Timing Controls**: Add delays between operations
 - **Instance Management**: List and manage active Android instances
+
+### 🚀 NEW: AI-Powered Computer Use Agent
+The project now includes an advanced **GBox Computer Use Agent** that combines OpenAI's computer use model with GBox Android automation:
+
+- **Visual Understanding**: Analyzes Android screenshots using AI
+- **Natural Language Instructions**: Takes high-level commands like "Open YouTube, search for 'gru ai', click first video"
+- **Smart Action Planning**: Plans multi-step workflows based on visual analysis
+- **Adaptive Behavior**: Responds to UI changes and app flows dynamically
+- **Complex Task Automation**: Handles sophisticated multi-app workflows
+
+[📖 **Read the Computer Use Documentation**](./README-computer-use.md)
 
 ## Setup
 
@@ -24,11 +35,36 @@ pnpm install
 
 2. Get your gbox API key from [gbox.run](https://gbox.run)
 
+3. **For Computer Use Agent**: Set up additional environment variables:
+```bash
+export OPENAI_API_KEY="your-openai-api-key"
+export GBOX_API_KEY="your-gbox-api-key"
+```
+
+**Note**: The Computer Use Agent requires:
+- OpenAI API key with `computer-use-preview` model access (Tier 3-5 required)
+- GBox API key for Android sandbox access
+
 ## Usage
 
-### Using the Agent
+### Using the Computer Use Agent (Recommended)
 
-The project includes a pre-configured agent that can handle natural language instructions for Android automation:
+The project includes an advanced AI agent that can handle complex visual automation tasks:
+
+```typescript
+import { gboxAgent } from './src/mastra/agents';
+
+const result = await gboxAgent.generate([
+  {
+    role: 'user',
+    content: "Open YouTube app, search for 'gru ai' and click the first video"
+  }
+]);
+```
+
+### Using the Traditional Agent
+
+For programmatic automation, use the traditional agent:
 
 ```typescript
 import { mastra } from './src/mastra/index.js';
@@ -36,7 +72,7 @@ import { mastra } from './src/mastra/index.js';
 const gboxAgent = mastra.getAgent('gboxAgent');
 
 const response = await gboxAgent.generate(`
-  Please create an Android sandbox with API key "your-api-key-here" and then:
+  Please create an Android sandbox and then:
   1. Click on coordinates (100, 200)
   2. Type "hello world"  
   3. Press the enter key
@@ -52,32 +88,48 @@ import { gboxAndroidTool } from './src/mastra/tools/gboxAndroid';
 
 // Create Android instance
 const createResult = await gboxAndroidTool.execute({
-  action: 'create',
-  apiKey: 'your-gbox-api-key'
+  context: {
+    action: 'create'
+  }
 });
 
 const instanceId = createResult.instanceId;
 
 // Click on screen
 await gboxAndroidTool.execute({
-  action: 'click',
-  instanceId,
-  x: 230,
-  y: 1201
+  context: {
+    action: 'click',
+    instanceId,
+    x: 230,
+    y: 1201
+  }
 });
 
 // Type text
 await gboxAndroidTool.execute({
-  action: 'type',
-  instanceId,
-  text: 'Hello Android!'
+  context: {
+    action: 'type',
+    instanceId,
+    text: 'Hello Android!'
+  }
 });
 
 // Press keys
 await gboxAndroidTool.execute({
-  action: 'press',
-  instanceId,
-  keys: ['enter']
+  context: {
+    action: 'press',
+    instanceId,
+    keys: ['enter']
+  }
+});
+
+// Take screenshot
+await gboxAndroidTool.execute({
+  context: {
+    action: 'screenshot',
+    instanceId,
+    outputFormat: 'base64'
+  }
 });
 ```
 
@@ -104,18 +156,15 @@ Presses device keys.
 - `keys` (required): Array of keys to press
   - Supported keys: `enter`, `delete`, `back`, `home`, `space`, `up`, `down`, `left`, `right`, `menu`
 
-### swipe
-Performs swipe gestures.
+### screenshot
+Takes a screenshot of the device screen.
 - `instanceId` (required): The Android instance ID
-- `startX` (required): Starting X coordinate
-- `startY` (required): Starting Y coordinate  
-- `endX` (required): Ending X coordinate
-- `endY` (required): Ending Y coordinate
-- `duration` (optional): Swipe duration in milliseconds (default: 1000)
-
-### getScreenSize
-Gets the device screen dimensions.
-- `instanceId` (required): The Android instance ID
+- `outputFormat` (optional): Output format - 'base64' or 'storageKey' (default: 'base64')
+- `clip` (optional): Clip area for partial screenshots
+  - `x` (required): X coordinate of the clip
+  - `y` (required): Y coordinate of the clip
+  - `width` (required): Width of the clip
+  - `height` (required): Height of the clip
 
 ### wait
 Adds a delay.
@@ -132,10 +181,17 @@ See `example.ts` for a complete automation example that:
 3. Navigates through the interface
 4. Performs a search operation
 
-## Running the Example
+## Running the Examples
 
+### Computer Use Agent Examples
 ```bash
-# Run the example
+# Run the computer use agent examples
+npx tsx example-computer-use.ts
+```
+
+### Traditional Automation Example
+```bash
+# Run the traditional automation example
 node example.ts
 
 # Or run with the Mastra dev server
@@ -157,7 +213,7 @@ pnpm run start
 
 ## API Key
 
-Make sure to replace `"gbox-yrt59uQslL8XUTJ679uzaAOd9L1EUIxiRlFVFWHLvxwPwnadjz"` with your actual gbox API key from [gbox.run](https://gbox.run).
+Make sure to replace `"gbox-api-key"` with your actual gbox API key from [gbox.run](https://gbox.run).
 
 ## Notes
 
